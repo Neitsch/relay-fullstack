@@ -18,6 +18,7 @@ export default class Feature extends React.Component {
           <Grid>
             {this.props.viewer.features.edges.map((edge) => {
               const imageUrl = require(`../../assets/${edge.node.name.toLowerCase()}.png`);
+              console.log(edge.node.id);
               return (
                 <Cell col={4} key={edge.node.id}>
                   <Card className={styles.card}>

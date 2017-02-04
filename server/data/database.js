@@ -1,13 +1,26 @@
 import DataLoader from 'dataloader';
 
+import MongoClient from 'mongodb';
+
+function DbConnection({
+  host = 'localhost',
+  port = 27017,
+  database = 'test'
+}) {
+  return new Promise((resolve, reject) => {
+    MongoClient.connect(`mongodb://${host}:${port}/${database}`,
+    (err, db) => {
+      err ? reject(err) : resolve(db);
+    });
+  });
+}
+
 class User {
-  id: number;
   name: string;
   username: string;
   website: string;
-  features: Array<Feature>;
-  constructor(id: number, name: string, username: string, website: string, features: Array<Feature>) {
-    this.id = id;
+  features: Array<string>;
+  constructor(name: string, username: string, website: string, features: Array<string>) {
     this.name = name;
     this.username = username;
     this.website = website;
@@ -16,12 +29,11 @@ class User {
 }
 
 class Feature {
-  id: number;
+  id: string;
   name: string;
   description: string;
   url: string;
-  constructor(id: number, name: string, description: string, url: string) {
-    this.id = id;
+  constructor(name: string, description: string, url: string) {
     this.name = name;
     this.description = description;
     this.url = url;
@@ -29,31 +41,64 @@ class Feature {
 }
 
 const features = [
-  new Feature(1, 'React', 'A JavaScript library for building user interfaces.', 'https://facebook.github.io/react'),
-  new Feature(2, 'Relay', 'A JavaScript framework for building data-driven react applications.', 'https://facebook.github.io/relay'),
-  new Feature(3, 'GraphQL', 'A reference implementation of GraphQL for JavaScript.', 'http://graphql.org'),
-  new Feature(4, 'Express', 'Fast, unopinionated, minimalist web framework for Node.js.', 'http://expressjs.com'),
-  new Feature(5, 'Webpack', 'Webpack is a module bundler that packs modules for the browser.', 'https://webpack.github.io'),
-  new Feature(6, 'Babel', 'Babel is a JavaScript compiler. Use next generation JavaScript, today.', 'https://babeljs.io'),
-  new Feature(7, 'PostCSS', 'PostCSS. A tool for transforming CSS with JavaScript.', 'http://postcss.org'),
-  new Feature(8, 'MDL', 'Material Design Lite lets you add a Material Design to your websites.', 'http://www.getmdl.io')
+  new Feature('React', 'A JavaScript library for building user interfaces.', 'https://facebook.github.io/react'),
+  new Feature('Relay', 'A JavaScript framework for building data-driven react applications.', 'https://facebook.github.io/relay'),
+  new Feature('GraphQL', 'A reference implementation of GraphQL for JavaScript.', 'http://graphql.org'),
+  new Feature('Express', 'Fast, unopinionated, minimalist web framework for Node.js.', 'http://expressjs.com'),
+  new Feature('Webpack', 'Webpack is a module bundler that packs modules for the browser.', 'https://webpack.github.io'),
+  new Feature('Babel', 'Babel is a JavaScript compiler. Use next generation JavaScript, today.', 'https://babeljs.io'),
+  new Feature('PostCSS', 'PostCSS. A tool for transforming CSS with JavaScript.', 'http://postcss.org'),
+  new Feature('MDL', 'Material Design Lite lets you add a Material Design to your websites.', 'http://www.getmdl.io')
 ];
-const lvarayut = new User(1, 'Varayut Lerdkanlayanawat', 'lvarayut', 'https://github.com/lvarayut/relay-fullstack', features.map(feature => feature.id));
+const lvarayut = new User('Varayut Lerdkanlayanawat', 'lvarayut', 'https://github.com/lvarayut/relay-fullstack', features.map(feature => feature.id));
+
+DbConnection({})
+  .then(
+    db => db.dropDatabase().then(
+      () => db.collection('feature').insertMany(features).then(
+        res => {
+          lvarayut.features = res.insertedIds;
+          return db.collection('user').insert(lvarayut).then(
+            () => db.close()
+          );
+        }
+      )
+    )
+  );
 
 /*
 * Add feature in memory
 */
 
-function getUser(id: number) {
-  return id === lvarayut.id ? lvarayut : null;
+async function getUser(id: number) {
+  lvarayut.id = lvarayut._id
+  return await DbConnection({}).then(
+    db => db.collection('user').findOne()
+  );
 }
 
-function getFeature(id: number) {
-  return features.find(w => w.id === id);
+async function getFeature(id: string) {
+  return await DbConnection({})
+    .then(
+      db => db.collection('feature').findOne({"_id": new MongoClient.ObjectID(id)})
+    ).then(
+      res => {
+        res.id = res._id;
+        return res;
+      }
+    );
 }
 
-function getFeatures() {
-  return features;
+async function getFeatures() {
+  return await DbConnection({})
+    .then(
+      db => db.collection('feature').find()
+    ).then(
+      res => res.map(a => {
+        a.id = a._id;
+        return a;
+      })
+    );
 }
 
 function fetchUser(id) {
@@ -76,16 +121,23 @@ const featureLoader = new DataLoader(
   ids => Promise.all(ids.map(fetchFeature))
 );
 
-let curFeatures = 9;
-function addFeature(name: string, description: string, url: string) {
-  const newFeature = new Feature(curFeatures, name, description, url);
-  features.push(newFeature);
-  newFeature.id = curFeatures;
-  lvarayut.features.push(newFeature.id);
-  featureLoader.clear(newFeature.id);
-  userLoader.clear(lvarayut.id);
-  curFeatures += 1;
-  return newFeature;
+async function addFeature(name: string, description: string, url: string) {
+  const newFeature = new Feature(name, description, url);
+  featureLoader.clear();
+  userLoader.clear(lvarayut._id);
+  return await DbConnection({}).then(
+    db => db.collection('feature').insertOne(newFeature).then(
+      res => {
+        let myres = res.ops[0];
+        myres.id = myres._id;
+        db.collection('user').update(
+          {},
+          {$push: {features: res.insertedId}}
+        );
+        return myres;
+      }
+    )
+  );
 }
 
 export {

@@ -1,5 +1,5 @@
 {
-  "name": "<%= moduleName %>",
+  "name": "abc",
   "version": "1.0.0",
   "description": "<%= appName %>, Powered by Relay Fullstack",
   "scripts": {
@@ -80,6 +80,7 @@
     "graphql-relay": "^0.4.3",
     "html-webpack-plugin": "^2.22.0",
     "lodash": "^4.16.4",
+    "mongodb": "^2.2.12",
     "normalize.css": "^5.0.0",
     "postcss-loader": "^1.0.0",
     "precss": "^1.4.0",

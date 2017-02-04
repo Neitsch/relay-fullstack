@@ -41,7 +41,10 @@ export default class Feature extends React.Component {
     }
 
     const addFeatureMutation = new AddFeatureMutation({ viewerId: this.props.viewer.id, ...inputData[value] });
-    Relay.Store.commitUpdate(addFeatureMutation);
+    Relay.Store.commitUpdate(addFeatureMutation, {
+      onFailure: transaction => console.log(transaction.getError()),
+      onSuccess: response => console.log(response)
+    });
   }
 
   render() {

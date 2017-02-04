@@ -1,4 +1,3 @@
-// @flow
 /* eslint-disable no-unused-vars, no-use-before-define */
 import {
   GraphQLBoolean,
@@ -25,7 +24,7 @@ import {
 
 import {
   User,
-  Feature,
+  Person,
   userLoader,
   featureLoader,
   getFeatures,
@@ -72,7 +71,9 @@ const userType = new GraphQLObjectType({
       type: featureConnection,
       description: 'Features that I have',
       args: connectionArgs,
-      resolve: (source, args) => connectionFromPromisedArray(featureLoader.loadMany(source.features), args)
+      resolve: (source, args) => {
+        return connectionFromPromisedArray(featureLoader.loadMany(source.features), args);
+      }
     },
     username: {
       type: GraphQLString,
@@ -134,7 +135,7 @@ const addFeatureMutation = mutationWithClientMutationId({
     },
     viewer: {
       type: userType,
-      resolve: () => userLoader.load(1)
+      resolve: () => userLoader.load('1')
     }
   },
 
@@ -153,7 +154,7 @@ const queryType = new GraphQLObjectType({
     // Add your own root fields here
     viewer: {
       type: userType,
-      resolve: () => userLoader.load(1)
+      resolve: () => userLoader.load('1')
     }
   })
 });
