@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
-import '../node_modules/react-mdl/extra/material';
+import '../../node_modules/react-mdl/extra/material';
 import Root from './root';
 
 const rootNode = document.createElement('div');

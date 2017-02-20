@@ -11,16 +11,17 @@ let appEntry;
 let devtool;
 let plugins;
 
+const clientRoot = path.join(__dirname, 'src', 'client')
 const htmlTemplate = new HtmlWebpackPlugin({
   title: 'Relay Starter Kit - Integrated with Relay, GraphQL, Express, ES6/ES7, JSX, Webpack, Babel, Material Design Lite, and PostCSS',
-  template: './client/index.html',
+  template: path.join(clientRoot, 'index.html'),
   mobile: true,
   inject: false
 });
-const favIcon = new FaviconsWebpackPlugin('./client/assets/logo.png');
+const favIcon = new FaviconsWebpackPlugin(path.join(clientRoot, 'assets', 'logo.png'));
 
 if (process.env.NODE_ENV === 'production') {
-  appEntry = [path.join(__dirname, 'client/index.js')];
+  appEntry = [path.join(clientRoot, 'index.js')];
   devtool = 'source-map';
   plugins = [
     new webpack.optimize.OccurrenceOrderPlugin(),
@@ -43,7 +44,7 @@ if (process.env.NODE_ENV === 'production') {
   appEntry = [
     // activate HMR for React
     'react-hot-loader/patch',
-    path.join(__dirname, 'client/index.js'),
+    path.join(clientRoot, 'index.js'),
     'webpack-dev-server/client?http://localhost:3000',
     'webpack/hot/only-dev-server'
   ];
